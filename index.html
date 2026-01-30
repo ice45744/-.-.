@@ -108,6 +108,7 @@
                     <h3 class="font-bold text-slate-700 mb-2 text-sm"><i class="fa-solid fa-pen-nib mr-2 text-blue-500"></i>สร้างประกาศ</h3>
                     <input id="post-title" type="text" placeholder="หัวข้อ" class="w-full bg-slate-50 rounded-lg p-2 mb-2 text-sm font-bold outline-none">
                     <textarea id="post-content" rows="2" placeholder="รายละเอียด..." class="w-full bg-slate-50 rounded-lg p-2 text-sm mb-2 outline-none"></textarea>
+                    <input id="post-image" type="url" placeholder="ลิงก์รูปภาพ (ไม่บังคับ)" class="w-full bg-slate-50 rounded-lg p-2 mb-2 text-sm outline-none">
                     <button type="button" onclick="createAnnouncement()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm w-full font-bold">โพสต์</button>
                 </div>
                 <div id="announcements-list" class="space-y-4"></div>
@@ -229,7 +230,16 @@
                             <h4 class="font-bold text-sm text-slate-700">2. ตรวจสอบความดี</h4>
                             <span id="pending-count" class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="admin-deeds-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                        <div id="admin-deeds-list" class="space-y-3 max-h-64 overflow-y-auto"></div>
+                    </div>
+
+                    <!-- Problem Reports -->
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-bold text-sm text-slate-700">4. ปัญหาที่แจ้งมา</h4>
+                            <span id="reports-count" class="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="admin-reports-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
                     </div>
 
                     <!-- Waste QR -->
@@ -289,7 +299,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, updateDoc, onSnapshot, query, where, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, updateDoc, onSnapshot, query, where, orderBy, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBkC4JI5zC5HbNZ9ryaNicrTjjgP1VQWtw",
@@ -434,6 +444,7 @@
                         document.getElementById('admin-post-box').classList.remove('hidden');
                         document.getElementById('admin-waste-search').classList.remove('hidden');
                         loadAdminTasks();
+                        loadAdminReports();
                     }
                     renderStampCard(userData.wastePoints || 0);
                 }
@@ -580,11 +591,13 @@
         window.createAnnouncement = async () => {
             const t = document.getElementById('post-title').value;
             const c = document.getElementById('post-content').value;
+            const img = document.getElementById('post-image').value;
             if(t) await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'announcements'), {
-                title: t, content: c, date: Date.now(), author: userData.name
+                title: t, content: c, date: Date.now(), author: userData.name, imageLink: img || ''
             });
             document.getElementById('post-title').value = '';
             document.getElementById('post-content').value = '';
+            document.getElementById('post-image').value = '';
         };
 
         function loadAnnouncements() {
@@ -595,10 +608,29 @@
                 snap.forEach(d => {
                     const data = d.data();
                     const date = new Date(data.date).toLocaleDateString('th-TH');
-                    list.innerHTML += `<div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-blue-500"><h3 class="font-bold text-slate-800">${data.title}</h3><p class="text-xs text-slate-400 mb-1">${date} โดย ${data.author}</p><p class="text-sm text-slate-600">${data.content}</p></div>`;
+                    const imgHtml = data.imageLink ? `<img src="${data.imageLink}" class="w-full rounded-lg mt-2 mb-2 max-h-48 object-cover" onerror="this.style.display='none'">` : '';
+                    const deleteBtn = userData && userData.role === 'admin' ? `<button onclick="deleteAnnouncement('${d.id}')" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs"><i class="fa-solid fa-trash"></i></button>` : '';
+                    list.innerHTML += `<div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-blue-500 relative">${deleteBtn}<h3 class="font-bold text-slate-800">${data.title}</h3><p class="text-xs text-slate-400 mb-1">${date} โดย ${data.author}</p>${imgHtml}<p class="text-sm text-slate-600">${data.content}</p></div>`;
                 });
             });
         }
+        
+        window.deleteAnnouncement = async (id) => {
+            const result = await Swal.fire({
+                title: 'ลบประกาศ?',
+                text: 'คุณต้องการลบประกาศนี้หรือไม่',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'ลบ',
+                cancelButtonText: 'ยกเลิก'
+            });
+            if(result.isConfirmed) {
+                await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'announcements', id));
+                showToast('ลบประกาศแล้ว');
+            }
+        };
 
         window.submitGoodDeed = async () => {
             const l = document.getElementById('deed-link').value;
@@ -636,16 +668,74 @@
                 if(snap.empty) list.innerHTML = '<p class="text-center text-xs text-slate-400">ไม่มีรายการ</p>';
                 snap.forEach(d => {
                     const data = d.data();
-                    list.innerHTML += `<div class="border-b border-slate-100 py-2"><div class="flex justify-between mb-1"><span class="text-xs font-bold text-slate-700">${data.name}</span><a href="${data.imageLink}" target="_blank" class="text-blue-500 text-xs">ดูรูป</a></div><div class="flex gap-2"><button onclick="adminAction('${d.id}','${data.uid}',true)" class="flex-1 bg-green-500 text-white text-xs rounded py-1">อนุมัติ</button><button onclick="adminAction('${d.id}','${data.uid}',false)" class="flex-1 bg-red-100 text-red-500 text-xs rounded py-1">ไม่ผ่าน</button></div></div>`;
+                    list.innerHTML += `<div class="border-b border-slate-100 py-3">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-xs font-bold text-slate-700">${data.name}</span>
+                            <a href="${data.imageLink}" target="_blank" class="text-blue-500 text-xs">ดูรูป</a>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-2">${data.description || '-'}</p>
+                        <div class="flex gap-2 items-center">
+                            <input type="number" id="score-${d.id}" value="1" min="1" max="100" class="w-16 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs text-center outline-none" placeholder="คะแนน">
+                            <button onclick="adminAction('${d.id}','${data.uid}',true)" class="flex-1 bg-green-500 text-white text-xs rounded py-1">อนุมัติ</button>
+                            <button onclick="adminAction('${d.id}','${data.uid}',false)" class="flex-1 bg-red-100 text-red-500 text-xs rounded py-1">ไม่ผ่าน</button>
+                        </div>
+                    </div>`;
                 });
             });
         }
         window.adminAction = async (did, uid, ok) => {
-            await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'good_deeds', did), { status: ok ? 'approved':'rejected' });
+            const scoreInput = document.getElementById('score-' + did);
+            const score = scoreInput ? parseInt(scoreInput.value) || 1 : 1;
+            await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'good_deeds', did), { status: ok ? 'approved':'rejected', score: ok ? score : 0 });
             if(ok) {
                 const uRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'users', uid);
                 const snap = await getDoc(uRef);
-                await updateDoc(uRef, { goodPoints: (snap.data().goodPoints||0)+1 });
+                await updateDoc(uRef, { goodPoints: (snap.data().goodPoints||0) + score });
+                showToast(`อนุมัติ +${score} แต้ม`, 'success');
+            } else {
+                showToast('ไม่ผ่านการอนุมัติ', 'info');
+            }
+        };
+        
+        function loadAdminReports() {
+            onSnapshot(query(collection(db, 'artifacts', APP_ID, 'public', 'data', 'reports')), (snap) => {
+                const list = document.getElementById('admin-reports-list');
+                const countEl = document.getElementById('reports-count');
+                if(countEl) countEl.innerText = snap.size;
+                list.innerHTML = '';
+                if(snap.empty) list.innerHTML = '<p class="text-center text-xs text-slate-400">ไม่มีปัญหาที่แจ้งมา</p>';
+                snap.forEach(d => {
+                    const data = d.data();
+                    list.innerHTML += `<div class="border-b border-slate-100 py-2">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <span class="text-xs font-bold text-orange-600">${data.topic}</span>
+                                <p class="text-xs text-slate-600 mt-1">${data.description}</p>
+                                <p class="text-[10px] text-slate-400 mt-1">รหัส: ${data.studentId || '-'}</p>
+                            </div>
+                            <button onclick="deleteReport('${d.id}')" class="text-red-400 hover:text-red-600 text-xs ml-2">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>`;
+                });
+            });
+        }
+        
+        window.deleteReport = async (id) => {
+            const result = await Swal.fire({
+                title: 'ลบปัญหานี้?',
+                text: 'คุณต้องการลบการแจ้งปัญหานี้หรือไม่',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'ลบ',
+                cancelButtonText: 'ยกเลิก'
+            });
+            if(result.isConfirmed) {
+                await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'reports', id));
+                showToast('ลบปัญหาแล้ว');
             }
         };
 
