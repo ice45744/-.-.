@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>สภานักเรียน - Student Council</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts (Prompt) -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- QR Scanner & Gen -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #F0F9FF;
+            color: #1E293B;
+            overscroll-behavior-y: contain; /* Prevent pull-to-refresh bug */
+        }
+        .gradient-bg { background: linear-gradient(135deg, #2563EB 0%, #60A5FA 100%); }
+        .gradient-morning { background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%); }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        
+        /* Mobile Active States */
+        .active-nav { color: #2563EB; transform: scale(1.1); }
+        .stamp-active {
+            background-color: #2563EB; color: white;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4); transform: scale(1.05);
+        }
+        .stamp-inactive {
+            background-color: rgba(255,255,255,0.5); color: rgba(255,255,255,0.5);
+            border: 2px dashed rgba(255,255,255,0.3);
+        }
+        #reader video { border-radius: 1rem; object-fit: cover; }
+    </style>
+</head>
+<body class="bg-blue-50">
+
+    <!-- 1. LOADING SCREEN -->
+    <div id="loading-screen" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+        <p class="text-slate-500 text-sm font-medium animate-pulse">กำลังเชื่อมต่อระบบ...</p>
+    </div>
+
+    <!-- 2. AUTH SCREEN -->
+    <div id="auth-container" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-xl p-8 w-full max-w-md border border-blue-50">
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 shadow-inner">
+                    <i class="fa-solid fa-graduation-cap text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800">สภานักเรียน</h1>
+                <p class="text-slate-500 text-sm">เข้าสู่ระบบเพื่อใช้งาน</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" onsubmit="event.preventDefault(); handleLogin();">
+                <input type="email" id="login-email" placeholder="อีเมล" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="login-password" placeholder="รหัสผ่าน" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-6 outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" class="w-full gradient-bg text-white font-bold rounded-xl py-3 shadow-lg active:scale-95 transition">เข้าสู่ระบบ</button>
+                <p class="text-center mt-4 text-sm text-slate-500">ยังไม่มีบัญชี? <span onclick="toggleAuthMode()" class="text-blue-600 font-bold cursor-pointer">ลงทะเบียน</span></p>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="hidden" onsubmit="event.preventDefault(); handleRegister();">
+                <div class="bg-blue-50 p-3 rounded-lg text-xs text-blue-700 mb-4">
+                    <i class="fa-solid fa-info-circle"></i> Admin ใช้รหัสลับ: <b>ADMIN1234</b>
+                </div>
+                <input type="text" id="reg-name" placeholder="ชื่อ-นามสกุล" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="reg-student-id" placeholder="รหัสนักเรียน" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="email" id="reg-email" placeholder="อีเมล" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="reg-password" placeholder="รหัสผ่าน (6 ตัวขึ้นไป)" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="reg-secret" placeholder="รหัสลับ (ถ้ามี)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-6 outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <button type="submit" class="w-full gradient-bg text-white font-bold rounded-xl py-3 shadow-lg active:scale-95 transition">ลงทะเบียน</button>
+                <p class="text-center mt-4 text-sm text-slate-500">มีบัญชีแล้ว? <span onclick="toggleAuthMode()" class="text-blue-600 font-bold cursor-pointer">เข้าสู่ระบบ</span></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. MAIN APP -->
+    <div id="app-container" class="hidden min-h-screen relative pb-24">
+        
+        <!-- Header -->
+        <header class="bg-white/95 backdrop-blur shadow-sm sticky top-0 z-40 px-6 py-4 flex justify-between items-center border-b border-slate-100">
+            <div>
+                <h1 class="text-xl font-bold text-slate-800" id="header-title">ประกาศ</h1>
+                <p class="text-xs text-slate-500 truncate max-w-[150px]" id="user-greeting">...</p>
+            </div>
+            <div id="admin-badge" class="hidden bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-md">ADMIN</div>
+        </header>
+
+        <main class="p-4 max-w-2xl mx-auto space-y-4">
+            
+            <!-- PAGE: HOME -->
+            <div id="page-home" class="page-content block">
+                <!-- Admin Post Box -->
+                <div id="admin-post-box" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-blue-100 mb-4">
+                    <h3 class="font-bold text-slate-700 mb-2 text-sm"><i class="fa-solid fa-pen-nib mr-2 text-blue-500"></i>สร้างประกาศ</h3>
+                    <input id="post-title" type="text" placeholder="หัวข้อ" class="w-full bg-slate-50 rounded-lg p-2 mb-2 text-sm font-bold outline-none">
+                    <textarea id="post-content" rows="2" placeholder="รายละเอียด..." class="w-full bg-slate-50 rounded-lg p-2 text-sm mb-2 outline-none"></textarea>
+                    <button type="button" onclick="createAnnouncement()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm w-full font-bold">โพสต์</button>
+                </div>
+                <div id="announcements-list" class="space-y-4"></div>
+            </div>
+
+            <!-- PAGE: ACTIVITY -->
+            <div id="page-activity" class="page-content hidden">
+                <div class="flex bg-white rounded-xl p-1 shadow-sm mb-4">
+                    <button type="button" onclick="switchActivityTab('good-deeds')" id="tab-deeds" class="flex-1 py-2 text-sm font-bold rounded-lg bg-blue-50 text-blue-600 transition">ความดี</button>
+                    <button type="button" onclick="switchActivityTab('waste-bank')" id="tab-waste" class="flex-1 py-2 text-sm font-bold rounded-lg text-slate-400 hover:bg-slate-50 transition">ธนาคารขยะ</button>
+                </div>
+
+                <!-- Good Deeds Tab -->
+                <div id="section-good-deeds">
+                    <!-- Morning Check-in Card -->
+                    <div class="bg-gradient-to-r from-orange-400 to-amber-400 rounded-2xl p-4 text-white shadow-lg mb-4 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold"><i class="fa-solid fa-sun mr-1"></i> เช็คชื่อเช้า</h3>
+                            <p class="text-xs text-orange-100">06:00 - 07:50 น. (รับแต้มความดี)</p>
+                        </div>
+                        <button onclick="startScanner()" class="bg-white text-orange-500 px-4 py-2 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition">
+                            <i class="fa-solid fa-qrcode mr-1"></i> สแกน
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 mb-4">
+                        <h4 class="font-bold text-slate-700 mb-3 text-sm">ส่งผลงานเพิ่มเติม</h4>
+                        <a href="https://pic.in.th/?lang=th" target="_blank" class="block bg-blue-50 border border-blue-200 border-dashed rounded-xl p-3 text-center mb-3">
+                            <i class="fa-solid fa-cloud-upload text-blue-400 mb-1"></i>
+                            <div class="text-xs text-blue-700 font-bold">1. อัปโหลดรูป (pic.in.th)</div>
+                        </a>
+                        <input id="deed-link" type="url" placeholder="วางลิงก์รูป..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 mb-2 text-sm outline-none">
+                        <input id="deed-desc" type="text" placeholder="รายละเอียด..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 text-sm outline-none">
+                        <button type="button" onclick="submitGoodDeed()" class="w-full gradient-bg text-white rounded-xl py-3 font-bold shadow-lg active:scale-95 transition">ส่งข้อมูล</button>
+                    </div>
+                    
+                    <div class="flex justify-between items-end mb-2 px-1">
+                        <h4 class="font-bold text-slate-600 text-sm">ประวัติความดี</h4>
+                        <button onclick="loadMyGoodDeeds()" class="text-xs text-blue-500"><i class="fa-solid fa-rotate-right"></i></button>
+                   </div>
+                   <div id="my-deeds-list" class="space-y-3 pb-20"></div>
+                </div>
+
+                <!-- Waste Bank Tab -->
+                <div id="section-waste-bank" class="hidden">
+                    <div class="gradient-bg rounded-2xl p-6 text-white shadow-xl mb-6 relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-6 relative z-10">
+                            <div><h3 class="font-bold text-xl">บัตรสะสมแต้ม</h3><p class="text-blue-100 text-xs">ธนาคารขยะ</p></div>
+                            <div class="bg-white/20 backdrop-blur px-3 py-1 rounded-lg"><span class="text-2xl font-bold" id="card-total-stamps">0</span><span class="text-xs"> แสตมป์</span></div>
+                        </div>
+                        <div class="grid grid-cols-5 gap-3 relative z-10" id="stamp-grid"></div>
+                    </div>
+
+                    <button type="button" onclick="startScanner()" class="w-full bg-white border-2 border-dashed border-blue-400 text-blue-600 rounded-2xl py-6 font-bold flex flex-col items-center justify-center hover:bg-blue-50 transition shadow-sm">
+                        <i class="fa-solid fa-qrcode text-3xl mb-2"></i>
+                        <span>สแกน QR รับแต้มขยะ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PAGE: REPORT -->
+            <div id="page-report" class="page-content hidden">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 text-center">แจ้งปัญหา</h2>
+                    <select id="report-topic" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 text-sm outline-none">
+                        <option>อุปกรณ์เสียหาย</option>
+                        <option>ความสะอาด</option>
+                        <option>ทะเลาะวิวาท</option>
+                        <option>อื่นๆ</option>
+                    </select>
+                    <textarea id="report-desc" rows="5" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 mb-6 text-sm outline-none" placeholder="รายละเอียด..."></textarea>
+                    <button onclick="submitReport()" class="w-full bg-slate-800 text-white rounded-xl py-3 font-bold shadow-lg">แจ้งเรื่อง</button>
+                </div>
+            </div>
+
+            <!-- PAGE: PROFILE -->
+            <div id="page-profile" class="page-content hidden">
+                <div class="bg-white rounded-2xl p-6 shadow-sm mb-4 text-center border border-slate-100">
+                    <div class="w-20 h-20 bg-gradient-to-tr from-cyan-400 to-blue-500 rounded-full mx-auto mb-3 flex items-center justify-center text-white text-3xl font-bold shadow-lg" id="profile-avatar">?</div>
+                    <h2 class="text-xl font-bold text-slate-800" id="profile-name">...</h2>
+                    <div class="inline-block bg-slate-100 rounded-full px-3 py-1 text-xs text-slate-500 mb-4 font-mono" id="profile-id">ID: ...</div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-yellow-50 rounded-xl p-3 border border-yellow-100">
+                            <div class="text-[10px] text-yellow-700 font-bold">แต้มความดี</div>
+                            <div class="text-2xl font-bold text-slate-800" id="profile-good-points">0</div>
+                        </div>
+                        <div class="bg-green-50 rounded-xl p-3 border border-green-100">
+                            <div class="text-[10px] text-green-700 font-bold">แต้มขยะ</div>
+                            <div class="text-2xl font-bold text-slate-800" id="profile-waste-points">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Panel -->
+                <div id="admin-panel" class="hidden space-y-4 border-t-2 border-slate-100 pt-4 pb-8">
+                    <h3 class="font-bold text-slate-800 flex items-center"><i class="fa-solid fa-lock text-red-500 mr-2"></i>สำหรับ Admin</h3>
+                    
+                    <!-- Morning QR Control -->
+                    <div class="bg-orange-50 rounded-xl p-4 border border-orange-100">
+                         <h4 class="font-bold text-sm text-orange-800 mb-2">1. QR เช็คชื่อเช้า (ถาวร)</h4>
+                         <p class="text-xs text-orange-600 mb-2">ใช้สแกนได้เฉพาะ 06:00 - 07:50 น.</p>
+                         <button onclick="showMorningQR()" class="w-full bg-white border border-orange-300 text-orange-600 font-bold py-2 rounded-lg text-sm shadow-sm">
+                             <i class="fa-solid fa-sun mr-1"></i> เปิด QR เช็คชื่อ
+                         </button>
+                    </div>
+
+                    <!-- Deed Approval -->
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-bold text-sm text-slate-700">2. ตรวจสอบความดี</h4>
+                            <span id="pending-count" class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="admin-deeds-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                    </div>
+
+                    <!-- Waste QR -->
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                        <h4 class="font-bold text-sm text-slate-700 mb-3">3. แต้มขยะ</h4>
+                        <button onclick="generateAdminQR()" id="btn-gen-qr" class="w-full border border-purple-500 text-purple-600 rounded-lg py-2 text-sm font-bold hover:bg-purple-50">
+                            <i class="fa-solid fa-qrcode mr-2"></i> สร้าง QR (5 นาที)
+                        </button>
+                    </div>
+                </div>
+
+                <button onclick="handleLogout()" class="w-full bg-white border border-red-100 text-red-500 rounded-xl py-3 font-bold hover:bg-red-50 mb-8">ออกจากระบบ</button>
+            </div>
+        </main>
+
+        <!-- Bottom Nav -->
+        <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 pb-safe z-40 h-16 flex justify-around items-center">
+            <button onclick="navTo('home')" class="nav-btn active flex-1 flex flex-col items-center text-slate-300" data-target="home">
+                <i class="fa-solid fa-house text-xl mb-1"></i><span class="text-[10px]">หน้าหลัก</span>
+            </button>
+            <button onclick="navTo('activity')" class="nav-btn flex-1 flex flex-col items-center text-slate-300" data-target="activity">
+                <i class="fa-solid fa-star text-xl mb-1"></i><span class="text-[10px]">กิจกรรม</span>
+            </button>
+            <button onclick="navTo('report')" class="nav-btn flex-1 flex flex-col items-center text-slate-300" data-target="report">
+                <i class="fa-solid fa-bullhorn text-xl mb-1"></i><span class="text-[10px]">แจ้งปัญหา</span>
+            </button>
+            <button onclick="navTo('profile')" class="nav-btn flex-1 flex flex-col items-center text-slate-300" data-target="profile">
+                <i class="fa-solid fa-user text-xl mb-1"></i><span class="text-[10px]">โปรไฟล์</span>
+            </button>
+        </nav>
+
+        <!-- Camera Overlay -->
+        <div id="scanner-overlay" class="hidden fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center">
+            <button type="button" onclick="stopScanner()" class="absolute top-6 right-6 bg-white/20 text-white p-3 rounded-full backdrop-blur z-[70]">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h3 class="text-white font-bold mb-4">สแกน QR Code</h3>
+            <div id="reader" class="w-[85vw] h-[85vw] bg-black border-2 border-white/50 rounded-xl overflow-hidden shadow-2xl"></div>
+            <p class="text-white/60 text-xs mt-6 text-center px-8">สแกน QR กิจกรรมหน้าเสาธง (เช้า) หรือ QR ธนาคารขยะ</p>
+        </div>
+
+        <!-- QR Display Modal (For Admin) -->
+        <div id="qr-modal" class="hidden fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-4">
+            <div class="bg-white p-6 rounded-2xl w-full max-w-sm text-center relative">
+                <button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <h3 class="font-bold text-lg mb-2" id="qr-modal-title">QR Code</h3>
+                <div id="qr-modal-canvas" class="flex justify-center my-4"></div>
+                <p class="text-sm text-slate-500" id="qr-modal-desc">...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, updateDoc, onSnapshot, query, where, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBkC4JI5zC5HbNZ9ryaNicrTjjgP1VQWtw",
+            authDomain: "student-council-6d488.firebaseapp.com",
+            projectId: "student-council-6d488",
+            storageBucket: "student-council-6d488.firebasestorage.app",
+            messagingSenderId: "682214432800",
+            appId: "1:682214432800:web:23643c32c43373e11d9c45",
+            measurementId: "G-Z4VKVMH5RX"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const APP_ID = "student-council-v3"; // New Version ID
+
+        let currentUser = null;
+        let userData = null;
+        let scannerObj = null;
+
+        // --- Auth ---
+        window.handleLogin = async () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            if(!email || !password) return showToast('กรุณากรอกข้อมูล', 'warning');
+            try {
+                showLoading();
+                await signInWithEmailAndPassword(auth, email, password);
+                // Auth listener handles the rest
+            } catch (error) {
+                hideLoading();
+                Swal.fire('ผิดพลาด', 'อีเมลหรือรหัสผ่านไม่ถูกต้อง', 'error');
+            }
+        };
+
+        window.handleRegister = async () => {
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const name = document.getElementById('reg-name').value;
+            const studentId = document.getElementById('reg-student-id').value.trim();
+            const secret = document.getElementById('reg-secret').value;
+
+            if(!email || !password || !name || !studentId) return showToast('ข้อมูลไม่ครบ', 'warning');
+
+            try {
+                showLoading();
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                const isAdmin = secret === "ADMIN1234";
+
+                await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'users', user.uid), {
+                    uid: user.uid, name: name, studentId: studentId, email: email,
+                    role: isAdmin ? 'admin' : 'student',
+                    goodPoints: 0, wastePoints: 0
+                });
+                await updateProfile(user, { displayName: name });
+                Swal.fire('สำเร็จ', 'ลงทะเบียนเรียบร้อย', 'success');
+            } catch (error) {
+                hideLoading();
+                Swal.fire('ผิดพลาด', error.message, 'error');
+            }
+        };
+        window.handleLogout = () => signOut(auth);
+        window.toggleAuthMode = () => {
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('register-form').classList.toggle('hidden');
+        };
+
+        // --- App ---
+        function initApp(user) {
+            currentUser = user;
+            onSnapshot(doc(db, 'artifacts', APP_ID, 'public', 'data', 'users', user.uid), (docSnap) => {
+                if (docSnap.exists()) {
+                    userData = docSnap.data();
+                    renderProfile(userData);
+                    if (userData.role === 'admin') {
+                        document.getElementById('admin-badge').classList.remove('hidden');
+                        document.getElementById('admin-panel').classList.remove('hidden');
+                        document.getElementById('admin-post-box').classList.remove('hidden');
+                        loadAdminTasks();
+                    }
+                    renderStampCard(userData.wastePoints || 0);
+                }
+            });
+            loadAnnouncements();
+            loadMyGoodDeeds();
+        }
+
+        // --- Scanner Logic (CORE) ---
+        window.startScanner = () => {
+            document.getElementById('scanner-overlay').classList.remove('hidden');
+            if(scannerObj) { scannerObj.clear(); }
+            
+            scannerObj = new Html5Qrcode("reader");
+            scannerObj.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, 
+                onScanSuccess, 
+                (err) => {} // ignore frames
+            ).catch(err => {
+                document.getElementById('scanner-overlay').classList.add('hidden');
+                Swal.fire('กล้องไม่พร้อม', 'กรุณาอนุญาตการใช้กล้อง', 'error');
+            });
+        };
+
+        window.stopScanner = async () => {
+            document.getElementById('scanner-overlay').classList.add('hidden');
+            if(scannerObj) { await scannerObj.stop(); scannerObj.clear(); scannerObj = null; }
+        };
+
+        async function onScanSuccess(decodedText, decodedResult) {
+            await window.stopScanner();
+            showLoading('กำลังตรวจสอบ...');
+
+            try {
+                // CASE 1: Morning Check-in (Permanent Code)
+                if (decodedText === 'SCHOOL-CHECKIN-MORNING') {
+                    await handleMorningCheckin();
+                } 
+                // CASE 2: Waste Bank (Dynamic Code)
+                else if (decodedText.startsWith('QR-')) {
+                    await handleWasteBankQR(decodedText);
+                } 
+                else {
+                    throw new Error('QR Code ไม่รู้จักในระบบ');
+                }
+            } catch (error) {
+                Swal.fire('ไม่สำเร็จ', error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function handleMorningCheckin() {
+            // 1. Time Check (06:00 - 07:50)
+            const now = new Date();
+            const hour = now.getHours();
+            const min = now.getMinutes();
+            
+            // Logic: Must be >= 06:00 AND <= 07:50
+            const isValidTime = (hour === 6) || (hour === 7 && min <= 50);
+            
+            if (!isValidTime) {
+                throw new Error('สแกนได้เฉพาะเวลา 06:00 - 07:50 น. เท่านั้น');
+            }
+
+            // 2. Duplicate Check (One per day)
+            const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            const checkinId = `${todayStr}_${currentUser.uid}`;
+            const checkinRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'daily_attendance', checkinId);
+            
+            const checkinSnap = await getDoc(checkinRef);
+            if(checkinSnap.exists()) {
+                throw new Error('วันนี้คุณสแกนเช็คชื่อไปแล้ว');
+            }
+
+            // 3. Success -> Save & Add Point
+            await setDoc(checkinRef, {
+                uid: currentUser.uid,
+                timestamp: now,
+                studentId: userData.studentId,
+                name: userData.name
+            });
+
+            const userRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'users', currentUser.uid);
+            await updateDoc(userRef, {
+                goodPoints: (userData.goodPoints || 0) + 1
+            });
+
+            Swal.fire({
+                icon: 'success',
+                title: 'เช็คชื่อสำเร็จ',
+                text: 'ได้รับแต้มความดี +1 (มาเช้า)',
+                timer: 2000, showConfirmButton: false
+            });
+        }
+
+        async function handleWasteBankQR(qrId) {
+            const qrRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'active_qrs', qrId);
+            const qrSnap = await getDoc(qrRef);
+
+            if (!qrSnap.exists()) throw new Error('QR Code ไม่ถูกต้อง');
+            const qrData = qrSnap.data();
+            
+            if (Date.now() > qrData.expiresAt) throw new Error('QR Code หมดอายุแล้ว');
+            if (qrData.usedBy && qrData.usedBy.includes(currentUser.uid)) throw new Error('ใช้โค้ดนี้ไปแล้ว');
+
+            await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'users', currentUser.uid), {
+                wastePoints: (userData.wastePoints || 0) + 10
+            });
+
+            const usedBy = qrData.usedBy || [];
+            usedBy.push(currentUser.uid);
+            await updateDoc(qrRef, { usedBy });
+
+            Swal.fire({ icon: 'success', title: 'สะสมแต้มขยะสำเร็จ', text: '+10 คะแนน' });
+        }
+
+        // --- Admin QR Generators ---
+        window.showMorningQR = () => {
+            const modal = document.getElementById('qr-modal');
+            const canvas = document.getElementById('qr-modal-canvas');
+            canvas.innerHTML = '';
+            
+            new QRCode(canvas, { text: "SCHOOL-CHECKIN-MORNING", width: 200, height: 200 });
+            
+            document.getElementById('qr-modal-title').innerText = "QR เช็คชื่อเช้า (ถาวร)";
+            document.getElementById('qr-modal-desc').innerText = "ปริ้นท์ติดบอร์ดได้เลย (สแกนได้ 06:00-07:50)";
+            modal.classList.remove('hidden');
+        };
+
+        window.generateAdminQR = async () => {
+            const qrId = 'QR-' + Math.random().toString(36).substr(2, 8);
+            const now = Date.now();
+            await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'active_qrs', qrId), {
+                createdAt: now, expiresAt: now + (5 * 60 * 1000), points: 10, usedBy: []
+            });
+            
+            const modal = document.getElementById('qr-modal');
+            const canvas = document.getElementById('qr-modal-canvas');
+            canvas.innerHTML = '';
+            new QRCode(canvas, { text: qrId, width: 200, height: 200 });
+            
+            document.getElementById('qr-modal-title').innerText = "QR ธนาคารขยะ (5 นาที)";
+            document.getElementById('qr-modal-desc').innerText = "สำหรับแจกแต้มเฉพาะกิจ (หมดอายุใน 5 นาที)";
+            modal.classList.remove('hidden');
+        };
+
+        // --- General Features ---
+        window.createAnnouncement = async () => {
+            const t = document.getElementById('post-title').value;
+            const c = document.getElementById('post-content').value;
+            if(t) await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'announcements'), {
+                title: t, content: c, date: Date.now(), author: userData.name
+            });
+            document.getElementById('post-title').value = '';
+            document.getElementById('post-content').value = '';
+        };
+
+        function loadAnnouncements() {
+            onSnapshot(query(collection(db, 'artifacts', APP_ID, 'public', 'data', 'announcements'), orderBy('date', 'desc')), (snap) => {
+                const list = document.getElementById('announcements-list');
+                list.innerHTML = '';
+                if(snap.empty) list.innerHTML = '<p class="text-center text-slate-400 py-4">ยังไม่มีประกาศ</p>';
+                snap.forEach(d => {
+                    const data = d.data();
+                    const date = new Date(data.date).toLocaleDateString('th-TH');
+                    list.innerHTML += `<div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-blue-500"><h3 class="font-bold text-slate-800">${data.title}</h3><p class="text-xs text-slate-400 mb-1">${date} โดย ${data.author}</p><p class="text-sm text-slate-600">${data.content}</p></div>`;
+                });
+            });
+        }
+
+        window.submitGoodDeed = async () => {
+            const l = document.getElementById('deed-link').value;
+            const d = document.getElementById('deed-desc').value;
+            if(!l) return showToast('ใส่ลิงก์รูปก่อนนะ', 'warning');
+            await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'good_deeds'), {
+                uid: currentUser.uid, studentId: userData.studentId, name: userData.name,
+                imageLink: l, description: d || '-', status: 'pending', timestamp: Date.now()
+            });
+            document.getElementById('deed-link').value = '';
+            showToast('ส่งแล้ว รอครูตรวจ', 'success');
+        };
+
+        window.loadMyGoodDeeds = () => {
+            onSnapshot(query(collection(db, 'artifacts', APP_ID, 'public', 'data', 'good_deeds'), orderBy('timestamp', 'desc')), (snap) => {
+                const list = document.getElementById('my-deeds-list');
+                list.innerHTML = '';
+                const myDeeds = [];
+                snap.forEach(d => { if(d.data().uid === currentUser.uid) myDeeds.push(d.data()); });
+                if(myDeeds.length===0) list.innerHTML = '<p class="text-xs text-center text-slate-400">ว่างเปล่า</p>';
+                myDeeds.forEach(data => {
+                    let st = '<span class="text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded text-[10px]">รอตรวจ</span>';
+                    if(data.status==='approved') st='<span class="text-green-600 bg-green-100 px-2 py-0.5 rounded text-[10px]">ผ่าน</span>';
+                    if(data.status==='rejected') st='<span class="text-red-600 bg-red-100 px-2 py-0.5 rounded text-[10px]">ไม่ผ่าน</span>';
+                    list.innerHTML += `<div class="bg-white p-3 rounded-xl border border-slate-100 flex justify-between items-center text-sm mb-2"><div class="truncate w-32 font-bold text-slate-600">${data.description}</div>${st}</div>`; 
+                });
+            });
+        };
+
+        function loadAdminTasks() {
+            onSnapshot(query(collection(db, 'artifacts', APP_ID, 'public', 'data', 'good_deeds'), where("status", "==", "pending")), (snap) => {
+                const list = document.getElementById('admin-deeds-list');
+                document.getElementById('pending-count').innerText = snap.size;
+                list.innerHTML = '';
+                if(snap.empty) list.innerHTML = '<p class="text-center text-xs text-slate-400">ไม่มีรายการ</p>';
+                snap.forEach(d => {
+                    const data = d.data();
+                    list.innerHTML += `<div class="border-b border-slate-100 py-2"><div class="flex justify-between mb-1"><span class="text-xs font-bold text-slate-700">${data.name}</span><a href="${data.imageLink}" target="_blank" class="text-blue-500 text-xs">ดูรูป</a></div><div class="flex gap-2"><button onclick="adminAction('${d.id}','${data.uid}',true)" class="flex-1 bg-green-500 text-white text-xs rounded py-1">อนุมัติ</button><button onclick="adminAction('${d.id}','${data.uid}',false)" class="flex-1 bg-red-100 text-red-500 text-xs rounded py-1">ไม่ผ่าน</button></div></div>`;
+                });
+            });
+        }
+        window.adminAction = async (did, uid, ok) => {
+            await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'good_deeds', did), { status: ok ? 'approved':'rejected' });
+            if(ok) {
+                const uRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'users', uid);
+                const snap = await getDoc(uRef);
+                await updateDoc(uRef, { goodPoints: (snap.data().goodPoints||0)+1 });
+            }
+        };
+
+        window.submitReport = async () => {
+            const t = document.getElementById('report-topic').value;
+            const d = document.getElementById('report-desc').value;
+            if(d) {
+                await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'reports'), { topic:t, description:d, studentId:userData.studentId, uid:currentUser.uid });
+                document.getElementById('report-desc').value = '';
+                showToast('ส่งเรื่องแล้ว');
+            }
+        };
+
+        // Helpers
+        function renderProfile(data) {
+            document.getElementById('user-greeting').innerText = data.name;
+            document.getElementById('profile-name').innerText = data.name;
+            document.getElementById('profile-id').innerText = data.studentId;
+            document.getElementById('profile-avatar').innerText = data.name[0];
+            document.getElementById('profile-good-points').innerText = data.goodPoints || 0;
+            document.getElementById('profile-waste-points').innerText = data.wastePoints || 0;
+        }
+        function renderStampCard(p) {
+            const stamps = Math.floor(p/10);
+            const cur = stamps%10;
+            const g = document.getElementById('stamp-grid');
+            document.getElementById('card-total-stamps').innerText = stamps;
+            g.innerHTML = '';
+            for(let i=1; i<=10; i++) g.innerHTML += `<div class="aspect-square rounded-full flex items-center justify-center ${i<=cur?'stamp-active':'stamp-inactive'}">${i<=cur?'<i class="fa-solid fa-check"></i>':i}</div>`;
+        }
+        window.switchActivityTab = (t) => {
+            document.getElementById('section-good-deeds').classList.toggle('hidden', t!=='good-deeds');
+            document.getElementById('section-waste-bank').classList.toggle('hidden', t!=='waste-bank');
+            document.getElementById('tab-deeds').className = t==='good-deeds' ? "flex-1 py-2 text-sm font-bold rounded-lg bg-blue-50 text-blue-600 transition shadow-sm" : "flex-1 py-2 text-sm font-bold rounded-lg text-slate-400 hover:bg-slate-50 transition";
+            document.getElementById('tab-waste').className = t==='waste-bank' ? "flex-1 py-2 text-sm font-bold rounded-lg bg-blue-50 text-blue-600 transition shadow-sm" : "flex-1 py-2 text-sm font-bold rounded-lg text-slate-400 hover:bg-slate-50 transition";
+        };
+        window.navTo = (t) => {
+            document.querySelectorAll('.page-content').forEach(e=>e.classList.add('hidden'));
+            document.getElementById('page-'+t).classList.remove('hidden');
+            document.getElementById('header-title').innerText = {'home':'ประกาศ','activity':'กิจกรรม','report':'แจ้งปัญหา','profile':'โปรไฟล์'}[t];
+            document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active-nav','text-blue-600'));
+            document.querySelector(`[data-target="${t}"]`).classList.add('active-nav','text-blue-600');
+        };
+        const showLoading = (m) => document.getElementById('loading-screen').classList.remove('hidden');
+        const hideLoading = () => document.getElementById('loading-screen').classList.add('hidden');
+        const showToast = (m,i='success') => Swal.mixin({toast:true,position:'top-end',showConfirmButton:false,timer:1500}).fire({icon:i,title:m});
+
+        // Start
+        onAuthStateChanged(auth, (user) => {
+            hideLoading();
+            if(user) {
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                initApp(user);
+                navTo('home');
+            } else {
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
