@@ -57,8 +57,8 @@
     <div id="auth-container" class="hidden min-h-screen flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-xl p-8 w-full max-w-md border border-blue-50">
             <div class="text-center mb-6">
-                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 shadow-inner">
-                    <i class="fa-solid fa-graduation-cap text-3xl"></i>
+                <div class="mx-auto mb-4 flex justify-center">
+                    <img src="https://www.dropbox.com/scl/fi/whfakycfyhqvp0k08rmg0/1769767494208.png?rlkey=gcig41plyyr1rbljsuzfl9vkq&st=0udcfkxq&dl=1" class="w-24 h-24 object-contain" alt="Logo">
                 </div>
                 <h1 class="text-2xl font-bold text-slate-800">สภานักเรียน</h1>
                 <p class="text-slate-500 text-sm">เข้าสู่ระบบเพื่อใช้งาน</p>
@@ -146,7 +146,10 @@
                     </div>
                     
                     <div class="flex justify-between items-end mb-2 px-1">
-                        <h4 class="font-bold text-slate-600 text-sm">ประวัติความดี</h4>
+                        <div>
+                            <h4 class="font-bold text-slate-600 text-sm">ประวัติความดี</h4>
+                            <p class="text-[10px] text-red-400"><i class="fa-solid fa-clock-rotate-left"></i> ประวัติจะถูกลบอัตโนมัติภายใน 24 ชม.</p>
+                        </div>
                         <button onclick="loadMyGoodDeeds()" class="text-xs text-blue-500"><i class="fa-solid fa-rotate-right"></i></button>
                    </div>
                    <div id="my-deeds-list" class="space-y-3 pb-20"></div>
@@ -249,8 +252,36 @@
                             <i class="fa-solid fa-qrcode mr-2"></i> สร้าง QR (5 นาที)
                         </button>
                     </div>
+
+                    <!-- Admin Scoreboard -->
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+                        <h4 class="font-bold text-sm text-slate-700 mb-3">5. สกอร์บอร์ด (อันดับคะแนน)</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <h5 class="text-[10px] font-bold text-blue-600 mb-2 uppercase">อันดับแต้มความดี</h5>
+                                <div id="scoreboard-good" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                            </div>
+                            <div>
+                                <h5 class="text-[10px] font-bold text-green-600 mb-2 uppercase">อันดับแต้มขยะ</h5>
+                                <div id="scoreboard-waste" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
+                <div id="settings-modal" class="hidden fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-4">
+                    <div class="bg-white p-6 rounded-2xl w-full max-w-sm">
+                        <h3 class="font-bold text-lg mb-4 text-center">แก้ไขข้อมูลส่วนตัว</h3>
+                        <input type="text" id="edit-name" placeholder="ชื่อ-นามสกุล" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-3 outline-none">
+                        <input type="text" id="edit-student-id" placeholder="รหัสนักเรียน" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-6 outline-none">
+                        <div class="flex gap-3">
+                            <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold">ยกเลิก</button>
+                            <button onclick="updateUserData()" class="flex-1 gradient-bg text-white py-3 rounded-xl font-bold">บันทึก</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="document.getElementById('settings-modal').classList.remove('hidden'); document.getElementById('edit-name').value = userData.name; document.getElementById('edit-student-id').value = userData.studentId;" class="w-full bg-blue-50 text-blue-600 rounded-xl py-3 font-bold mb-3">ตั้งค่าโปรไฟล์</button>
                 <button onclick="handleLogout()" class="w-full bg-white border border-red-100 text-red-500 rounded-xl py-3 font-bold hover:bg-red-50 mb-8">ออกจากระบบ</button>
             </div>
         </main>
@@ -315,6 +346,29 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const APP_ID = "student-council-v3";
+
+        // Discord Webhooks
+        const WEBHOOK_REPORT = "https://discord.com/api/webhooks/1466822966867132460/OnSF_IeBbhIj7WahZkX-JSnzXWfOEL0j9n6YXwpSPxYD525vGrSn2fFWTyCf0ROMKs3k";
+        const WEBHOOK_DEED = "https://discord.com/api/webhooks/1466822348358422671/B9-tLA3AMnfReZ-88GKnkQFFQTCFfpcPha4glXFPanCBfCJfs3KGQlQiXf_ZM1mxjeqZ";
+        const WEBHOOK_ADMIN = "https://discord.com/api/webhooks/1466822976207847556/NizRwGIGkL3EqyQEAKDrnl4H_f6UiGKvj1sqwKCWpm30HWcIg0OQ0Bvgf2VZrVq0cdue";
+
+        async function sendDiscordNotification(url, title, message) {
+            try {
+                await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: "@website",
+                        embeds: [{
+                            title: title,
+                            description: message,
+                            color: 3447003,
+                            timestamp: new Date().toISOString()
+                        }]
+                    })
+                });
+            } catch (e) { console.error("Discord error", e); }
+        }
 
         let currentUser = null;
         let userData = null;
@@ -402,15 +456,38 @@
                 
                 const studentDoc = querySnapshot.docs[0];
                 const studentData = studentDoc.data();
-                const newStamps = (studentData.wastePoints || 0) + 10; // Change to +10 for a full stamp
+                const newStamps = (studentData.wastePoints || 0) + 10;
                 
                 await updateDoc(studentDoc.ref, { wastePoints: newStamps });
                 hideLoading();
+                
+                sendDiscordNotification(WEBHOOK_ADMIN, "Admin เพิ่มคะแนนขยะ", `Admin ได้เพิ่ม 10 คะแนนให้ ${studentData.name} (${sId})\nรวมเป็น: ${newStamps}`);
+                
                 Swal.fire('สำเร็จ', `เพิ่มแต้มให้ ${studentData.name} แล้ว (รวม ${newStamps})`, 'success');
                 document.getElementById('search-student-id').value = '';
             } catch (e) {
                 hideLoading();
                 console.error(e);
+            }
+        };
+
+        window.updateUserData = async () => {
+            const newName = document.getElementById('edit-name').value.trim();
+            const newSId = document.getElementById('edit-student-id').value.trim();
+            if(!newName || !newSId) return;
+
+            try {
+                showLoading();
+                await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'users', currentUser.uid), {
+                    name: newName,
+                    studentId: newSId
+                });
+                document.getElementById('settings-modal').classList.add('hidden');
+                hideLoading();
+                Swal.fire('สำเร็จ', 'อัปเดตข้อมูลเรียบร้อย', 'success');
+            } catch (e) {
+                hideLoading();
+                Swal.fire('ผิดพลาด', e.message, 'error');
             }
         };
 
@@ -445,12 +522,35 @@
                         document.getElementById('admin-waste-search').classList.remove('hidden');
                         loadAdminTasks();
                         loadAdminReports();
+                        loadAdminScoreboard();
                     }
                     renderStampCard(userData.wastePoints || 0);
                 }
             });
             loadAnnouncements();
             loadMyGoodDeeds();
+        }
+
+        function loadAdminScoreboard() {
+            onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'users'), (snap) => {
+                const goodList = document.getElementById('scoreboard-good');
+                const wasteList = document.getElementById('scoreboard-waste');
+                goodList.innerHTML = '';
+                wasteList.innerHTML = '';
+
+                const users = [];
+                snap.forEach(d => users.push(d.data()));
+
+                const topGood = [...users].sort((a,b) => (b.goodPoints||0) - (a.goodPoints||0)).slice(0, 10);
+                const topWaste = [...users].sort((a,b) => (b.wastePoints||0) - (a.wastePoints||0)).slice(0, 10);
+
+                topGood.forEach((u, i) => {
+                    goodList.innerHTML += `<div class="flex justify-between items-center bg-blue-50/50 p-2 rounded text-[10px]"><span class="font-bold">#${i+1} ${u.name}</span><span class="text-blue-600 font-bold">${u.goodPoints||0}</span></div>`;
+                });
+                topWaste.forEach((u, i) => {
+                    wasteList.innerHTML += `<div class="flex justify-between items-center bg-green-50/50 p-2 rounded text-[10px]"><span class="font-bold">#${i+1} ${u.name}</span><span class="text-green-600 font-bold">${u.wastePoints||0}</span></div>`;
+                });
+            });
         }
 
         // --- Scanner Logic (CORE) ---
@@ -575,6 +675,8 @@
                 createdAt: now, expiresAt: now + (5 * 60 * 1000), points: 10, usedBy: []
             });
             
+            sendDiscordNotification(WEBHOOK_ADMIN, "Admin สร้าง QR Code", `Admin ได้สร้าง QR Code แจกแต้มขยะ (10 คะแนน)\nID: ${qrId}\nหมดอายุ: ใน 5 นาที`);
+
             const modal = document.getElementById('qr-modal');
             const canvasDiv = document.getElementById('qr-modal-canvas');
             const downloadBtn = document.getElementById('download-qr-btn');
@@ -636,11 +738,16 @@
             const l = document.getElementById('deed-link').value;
             const d = document.getElementById('deed-desc').value;
             if(!l) return showToast('ใส่ลิงก์รูปก่อนนะ', 'warning');
+            
             await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'good_deeds'), {
                 uid: currentUser.uid, studentId: userData.studentId, name: userData.name,
                 imageLink: l, description: d || '-', status: 'pending', timestamp: Date.now()
             });
+
+            sendDiscordNotification(WEBHOOK_DEED, "นักเรียนส่งแต้มความดี", `${userData.name} (${userData.studentId})\nรายละเอียด: ${d || '-'}\nรูปภาพ: ${l}`);
+
             document.getElementById('deed-link').value = '';
+            document.getElementById('deed-desc').value = '';
             showToast('ส่งแล้ว รอครูตรวจ', 'success');
         };
 
@@ -648,15 +755,25 @@
             onSnapshot(query(collection(db, 'artifacts', APP_ID, 'public', 'data', 'good_deeds'), orderBy('timestamp', 'desc')), (snap) => {
                 const list = document.getElementById('my-deeds-list');
                 list.innerHTML = '';
-                const myDeeds = [];
-                snap.forEach(d => { if(d.data().uid === currentUser.uid) myDeeds.push(d.data()); });
-                if(myDeeds.length===0) list.innerHTML = '<p class="text-xs text-center text-slate-400">ว่างเปล่า</p>';
-                myDeeds.forEach(data => {
-                    let st = '<span class="text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded text-[10px]">รอตรวจ</span>';
-                    if(data.status==='approved') st='<span class="text-green-600 bg-green-100 px-2 py-0.5 rounded text-[10px]">ผ่าน</span>';
-                    if(data.status==='rejected') st='<span class="text-red-600 bg-red-100 px-2 py-0.5 rounded text-[10px]">ไม่ผ่าน</span>';
-                    list.innerHTML += `<div class="bg-white p-3 rounded-xl border border-slate-100 flex justify-between items-center text-sm mb-2"><div class="truncate w-32 font-bold text-slate-600">${data.description}</div>${st}</div>`; 
+                const now = Date.now();
+                const dayMs = 24 * 60 * 60 * 1000;
+
+                snap.forEach(d => { 
+                    const data = d.data();
+                    if(data.uid === currentUser.uid) {
+                        // 24h Cleanup Check
+                        if (now - data.timestamp > dayMs) {
+                            deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'good_deeds', d.id));
+                            return;
+                        }
+
+                        let st = '<span class="text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded text-[10px]">รอตรวจ</span>';
+                        if(data.status==='approved') st='<span class="text-green-600 bg-green-100 px-2 py-0.5 rounded text-[10px]">ผ่าน</span>';
+                        if(data.status==='rejected') st='<span class="text-red-600 bg-red-100 px-2 py-0.5 rounded text-[10px]">ไม่ผ่าน</span>';
+                        list.innerHTML += `<div class="bg-white p-3 rounded-xl border border-slate-100 flex justify-between items-center text-sm mb-2"><div class="truncate w-32 font-bold text-slate-600">${data.description}</div>${st}</div>`; 
+                    }
                 });
+                if(list.innerHTML === '') list.innerHTML = '<p class="text-xs text-center text-slate-400">ว่างเปล่า (ประวัติเกิน 24 ชม. จะถูกลบ)</p>';
             });
         };
 
@@ -690,7 +807,11 @@
             if(ok) {
                 const uRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'users', uid);
                 const snap = await getDoc(uRef);
-                await updateDoc(uRef, { goodPoints: (snap.data().goodPoints||0) + score });
+                const uData = snap.data();
+                await updateDoc(uRef, { goodPoints: (uData.goodPoints||0) + score });
+                
+                sendDiscordNotification(WEBHOOK_ADMIN, "Admin อนุมัติคะแนนความดี", `Admin ได้อนุมัติคะแนนให้ ${uData.name} (${uData.studentId})\nจำนวน: +${score} แต้ม`);
+                
                 showToast(`อนุมัติ +${score} แต้ม`, 'success');
             } else {
                 showToast('ไม่ผ่านการอนุมัติ', 'info');
@@ -744,6 +865,9 @@
             const d = document.getElementById('report-desc').value;
             if(d) {
                 await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'reports'), { topic:t, description:d, studentId:userData.studentId, uid:currentUser.uid });
+                
+                sendDiscordNotification(WEBHOOK_REPORT, "แจ้งปัญหาใหม่จากผู้ใช้งาน", `นักเรียน: ${userData.name} (${userData.studentId})\nหัวข้อ: ${t}\nรายละเอียด: ${d}`);
+                
                 document.getElementById('report-desc').value = '';
                 showToast('ส่งเรื่องแล้ว');
             }
