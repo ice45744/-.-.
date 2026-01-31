@@ -24,7 +24,7 @@ A Thai language Student Council web application - a single-page application buil
 
 ## Recent Changes (January 31, 2026)
 - Renamed system to "ระบบดิจิทัล ส.ท." (S.T. Digital System)
-- Added credit text on login page: "เครดิตอนาว่า จัดทำโดยพรรคส.ท.ก้าวหน้า และคณะกรรมการนักเรียน"
+- Added credit text on login page: "จัดทำโดยพรรคส.ท.ก้าวหน้า และคณะกรรมการนักเรียน"
 - Added Discord notification for morning check-in with user name, ID, and time.
 - Improved QR code quality (Level H error correction) to fix scanning issues for permanent/downloaded QR codes.
 - Added reward redemption system for waste bank activity
