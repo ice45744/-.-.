@@ -344,6 +344,14 @@
     <div id="settings-modal" class="hidden fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-4">
                     <div class="bg-white p-6 rounded-2xl w-full max-w-sm">
                         <h3 class="font-bold text-lg mb-4 text-center">แก้ไขข้อมูลส่วนตัว</h3>
+                        
+                        <div class="mb-6">
+                            <label class="text-xs font-bold text-slate-500 mb-2 block text-center">เลือกรูปโปรไฟล์</label>
+                            <div class="grid grid-cols-4 gap-3" id="avatar-selector">
+                                <!-- Avatars will be injected here -->
+                            </div>
+                        </div>
+
                         <input type="text" id="edit-name" placeholder="ชื่อ-นามสกุล" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-3 outline-none">
                         <input type="text" id="edit-student-id" placeholder="รหัสนักเรียน" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-6 outline-none">
                         <div class="flex gap-3">
@@ -353,7 +361,7 @@
                     </div>
                 </div>
 
-                <button onclick="document.getElementById('settings-modal').classList.remove('hidden'); document.getElementById('edit-name').value = userData.name; document.getElementById('edit-student-id').value = userData.studentId;" class="w-full bg-blue-50 text-blue-600 rounded-xl py-3 font-bold mb-3">ตั้งค่าโปรไฟล์</button>
+                <button onclick="document.getElementById('settings-modal').classList.remove('hidden'); document.getElementById('edit-name').value = userData.name; document.getElementById('edit-student-id').value = userData.studentId; initAvatarSelector();" class="w-full bg-blue-50 text-blue-600 rounded-xl py-3 font-bold mb-3">ตั้งค่าโปรไฟล์</button>
                 <button onclick="handleLogout()" class="w-full bg-white border border-red-100 text-red-500 rounded-xl py-3 font-bold hover:bg-red-50 mb-8">ออกจากระบบ</button>
             </div>
         </main>
@@ -576,13 +584,16 @@
         window.updateUserData = async () => {
             const newName = document.getElementById('edit-name').value.trim();
             const newSId = document.getElementById('edit-student-id').value.trim();
+            const selectedAvatar = document.querySelector('.avatar-option.ring-2')?.dataset.avatar || userData.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix';
+            
             if(!newName || !newSId) return;
 
             try {
                 showLoading();
                 await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'users', currentUser.uid), {
                     name: newName,
-                    studentId: newSId
+                    studentId: newSId,
+                    avatar: selectedAvatar
                 });
                 document.getElementById('settings-modal').classList.add('hidden');
                 hideLoading();
@@ -591,6 +602,34 @@
                 hideLoading();
                 Swal.fire('ผิดพลาด', e.message, 'error');
             }
+        };
+
+        const AVATARS = [
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka',
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=Milo',
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=Luna',
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=Jasper',
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=Sasha',
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo',
+            'https://api.dicebear.com/7.x/avataaars/svg?seed=Bella'
+        ];
+
+        window.initAvatarSelector = () => {
+            const container = document.getElementById('avatar-selector');
+            if(!container) return;
+            container.innerHTML = '';
+            AVATARS.forEach(url => {
+                const div = document.createElement('div');
+                div.className = `avatar-option w-full aspect-square rounded-full border-2 border-transparent cursor-pointer transition overflow-hidden bg-slate-100 ${userData.avatar === url ? 'ring-2 ring-blue-500 border-white' : ''}`;
+                div.dataset.avatar = url;
+                div.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+                div.onclick = () => {
+                    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('ring-2', 'ring-blue-500', 'border-white'));
+                    div.classList.add('ring-2', 'ring-blue-500', 'border-white');
+                };
+                container.appendChild(div);
+            });
         };
 
         window.downloadQRCode = () => {
@@ -1109,7 +1148,23 @@
             date.innerText = new Date(data.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
             content.innerText = data.content;
             author.innerText = data.author;
-            avatar.innerText = data.author[0];
+            
+            // Get author's avatar
+            const q = query(collection(db, 'artifacts', APP_ID, 'public', 'data', 'users'), where("name", "==", data.author));
+            const userSnap = await getDocs(q);
+            if (!userSnap.empty) {
+                const uData = userSnap.docs[0].data();
+                if (uData.avatar) {
+                    avatar.innerHTML = `<img src="${uData.avatar}" class="w-full h-full object-cover rounded-full">`;
+                    avatar.classList.remove('gradient-bg', 'flex', 'items-center', 'justify-center', 'text-white', 'text-lg');
+                } else {
+                    avatar.innerText = data.author[0];
+                    avatar.classList.add('gradient-bg', 'flex', 'items-center', 'justify-center', 'text-white', 'text-lg');
+                }
+            } else {
+                avatar.innerText = data.author[0];
+                avatar.classList.add('gradient-bg', 'flex', 'items-center', 'justify-center', 'text-white', 'text-lg');
+            }
 
             if (data.imageLink) {
                 img.src = data.imageLink;
@@ -1283,7 +1338,16 @@
             document.getElementById('user-greeting').innerText = data.name;
             document.getElementById('profile-name').innerText = data.name;
             document.getElementById('profile-id').innerText = `ID: ${data.studentId}`;
-            document.getElementById('profile-avatar').innerText = data.name[0];
+            
+            const avatarEl = document.getElementById('profile-avatar');
+            if (data.avatar) {
+                avatarEl.innerHTML = `<img src="${data.avatar}" class="w-full h-full object-cover rounded-full">`;
+                avatarEl.classList.remove('bg-gradient-to-tr', 'from-cyan-400', 'to-blue-500', 'flex', 'items-center', 'justify-center', 'text-white', 'text-3xl');
+            } else {
+                avatarEl.innerText = data.name[0];
+                avatarEl.classList.add('bg-gradient-to-tr', 'from-cyan-400', 'to-blue-500', 'flex', 'items-center', 'justify-center', 'text-white', 'text-3xl');
+            }
+            
             document.getElementById('profile-good-points').innerText = data.goodPoints || 0;
             document.getElementById('profile-waste-points').innerText = data.wastePoints || 0;
         }
