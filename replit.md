@@ -22,7 +22,15 @@ A Thai language Student Council web application - a single-page application buil
 - Morning check-in via QR code scanning
 - Waste bank stamp collection system
 
-## Recent Changes (January 30, 2026)
+## Recent Changes (January 31, 2026)
+- Added reward redemption system for waste bank activity
+  - Admin can add rewards with name, description, image link, required points, and stock quantity
+  - Admin can delete rewards
+  - Users can view available rewards in waste bank tab
+  - Users can redeem rewards using their waste bank stamps
+  - Discord notification sent when rewards are redeemed
+
+## Previous Changes (January 30, 2026)
 - Added score input field for Admin to enter custom points when approving good deeds
 - Added problem reports section in Admin panel with delete functionality
 - Added optional image link field for announcements
