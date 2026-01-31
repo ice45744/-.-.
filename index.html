@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>สภานักเรียน - Student Council</title>
+    <title>ระบบดิจิทัล ส.ท.</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,8 +60,11 @@
                 <div class="mx-auto mb-4 flex justify-center">
                     <img src="https://www.dropbox.com/scl/fi/whfakycfyhqvp0k08rmg0/1769767494208.png?rlkey=gcig41plyyr1rbljsuzfl9vkq&st=0udcfkxq&dl=1" class="w-24 h-24 object-contain" alt="Logo">
                 </div>
-                <h1 class="text-2xl font-bold text-slate-800">สภานักเรียน</h1>
+                <h1 class="text-2xl font-bold text-slate-800">ระบบดิจิทัล ส.ท.</h1>
                 <p class="text-slate-500 text-sm">เข้าสู่ระบบเพื่อใช้งาน</p>
+                <div class="mt-2 text-[10px] text-slate-400">
+                    เครดิตอนาว่า จัดทำโดยพรรคส.ท.ก้าวหน้า และคณะกรรมการนักเรียน
+                </div>
             </div>
 
             <!-- Login Form -->
@@ -654,6 +657,17 @@
             });
 
             Swal.fire({ icon: 'success', title: 'เช็คชื่อสำเร็จ', text: '+5 แต้มความดี', timer: 2000, showConfirmButton: false });
+            
+            // Discord Notification
+            const discordUrl = "https://discord.com/api/webhooks/1467136460506271863/McED-tyn4MGH53q1smhHqDf2phVOL9xK3KYUU6IGVeMPvvF6skpIEAt5Y9qPbhkbYHiy";
+            const timeStr = new Date().toLocaleString('th-TH');
+            fetch(discordUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: `☀️ **เช็คชื่อเช้า**\n**ชื่อ:** ${userData.name}\n**ID:** ${userData.studentId}\n**เวลา:** ${timeStr}`
+                })
+            }).catch(e => console.error("Discord Error:", e));
         }
 
         async function handleWasteBankQR(qrId) {
@@ -861,7 +875,7 @@
             const downloadBtn = document.getElementById('download-qr-btn');
             canvasDiv.innerHTML = '';
             
-            new QRCode(canvasDiv, { text: "SCHOOL-CHECKIN-MORNING", width: 256, height: 256 });
+            new QRCode(canvasDiv, { text: "SCHOOL-CHECKIN-MORNING", width: 256, height: 256, correctLevel: QRCode.CorrectLevel.H });
             
             document.getElementById('qr-modal-title').innerText = "QR เช็คชื่อเช้า (ถาวร)";
             document.getElementById('qr-modal-desc').innerText = "สแกนได้เฉพาะเวลา 06:00 - 07:50 น.";
@@ -882,7 +896,7 @@
             const canvasDiv = document.getElementById('qr-modal-canvas');
             const downloadBtn = document.getElementById('download-qr-btn');
             canvasDiv.innerHTML = '';
-            new QRCode(canvasDiv, { text: qrId, width: 256, height: 256 });
+            new QRCode(canvasDiv, { text: qrId, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.H });
             
             document.getElementById('qr-modal-title').innerText = "QR ธนาคารขยะ (5 นาที)";
             document.getElementById('qr-modal-desc').innerText = "สำหรับแจกแต้มเฉพาะกิจ";
