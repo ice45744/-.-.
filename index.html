@@ -405,7 +405,7 @@
     </div>
 
     <!-- Firebase -->
-    <!-- 7. HIGHLIGHT MODAL -->
+    <!-- 7. HIGHLIGHT MODAL (Full details - when user clicks) -->
     <div id="highlight-modal" class="hidden fixed inset-0 z-[200] bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden relative shadow-2xl animate-in fade-in zoom-in duration-300">
             <button onclick="document.getElementById('highlight-modal').classList.add('hidden')" class="absolute top-4 right-4 z-10 bg-black/20 hover:bg-black/40 text-white w-10 h-10 rounded-full flex items-center justify-center transition">
@@ -432,6 +432,16 @@
                     <button onclick="document.getElementById('highlight-modal').classList.add('hidden')" class="bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg active:scale-95 transition">ปิดหน้าต่าง</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- 8. AUTO POPUP MODAL (Image only - for auto popup highlighted posts) -->
+    <div id="auto-popup-modal" class="hidden fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="relative w-full max-w-2xl">
+            <button onclick="document.getElementById('auto-popup-modal').classList.add('hidden')" class="absolute -top-12 right-0 z-10 bg-white/20 hover:bg-white/40 text-white w-10 h-10 rounded-full flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <img id="auto-popup-image" src="" class="w-full rounded-2xl shadow-2xl object-contain max-h-[80vh]" alt="ประกาศสำคัญ">
         </div>
     </div>
 
@@ -1127,11 +1137,21 @@
                 // Auto popup if there's a highlighted post and it's new for this session
                 if (highlightedPost && highlightedPost.id !== lastAutoPopupId) {
                     lastAutoPopupId = highlightedPost.id;
-                    setTimeout(() => showHighlight(highlightedPost.id), 1000);
+                    // Show image-only popup for auto popup (highlighted posts)
+                    if (highlightedPost.imageLink) {
+                        setTimeout(() => showAutoPopupImage(highlightedPost.imageLink), 1000);
+                    }
                 }
             });
         }
         
+        window.showAutoPopupImage = (imageUrl) => {
+            const modal = document.getElementById('auto-popup-modal');
+            const img = document.getElementById('auto-popup-image');
+            img.src = imageUrl;
+            modal.classList.remove('hidden');
+        };
+
         window.showHighlight = async (id) => {
             const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'announcements', id);
             const snap = await getDoc(docRef);
