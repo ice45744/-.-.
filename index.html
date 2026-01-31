@@ -885,10 +885,18 @@
             // Ensure QRCode library is ready and value is exact
             new QRCode(canvasDiv, { 
                 text: "SCHOOL-CHECKIN-MORNING", 
-                width: 512, // Increased size for better print quality
+                width: 512, // High resolution for download
                 height: 512, 
                 correctLevel: QRCode.CorrectLevel.H 
             });
+            
+            // Add mobile responsive style to the generated QR
+            const qrImg = canvasDiv.querySelector('img');
+            const qrCanvas = canvasDiv.querySelector('canvas');
+            if(qrImg) qrImg.style.maxWidth = '100%';
+            if(qrCanvas) qrCanvas.style.maxWidth = '100%';
+            if(qrImg) qrImg.style.height = 'auto';
+            if(qrCanvas) qrCanvas.style.height = 'auto';
             
             document.getElementById('qr-modal-title').innerText = "QR เช็คชื่อเช้า (ถาวร)";
             document.getElementById('qr-modal-desc').innerText = "สแกนได้เฉพาะเวลา 06:00 - 08:00 น.";
@@ -915,6 +923,14 @@
                 height: 512, 
                 correctLevel: QRCode.CorrectLevel.H 
             });
+            
+            // Add mobile responsive style to the generated QR
+            const qrImg = canvasDiv.querySelector('img');
+            const qrCanvas = canvasDiv.querySelector('canvas');
+            if(qrImg) qrImg.style.maxWidth = '100%';
+            if(qrCanvas) qrCanvas.style.maxWidth = '100%';
+            if(qrImg) qrImg.style.height = 'auto';
+            if(qrCanvas) qrCanvas.style.height = 'auto';
             
             document.getElementById('qr-modal-title').innerText = "QR ธนาคารขยะ (5 นาที)";
             document.getElementById('qr-modal-desc').innerText = "สำหรับแจกแต้มเฉพาะกิจ";
