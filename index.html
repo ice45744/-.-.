@@ -92,13 +92,23 @@
             height: auto;
             object-fit: contain;
             display: block;
+            margin: 0 auto;
         }
         .announcement-img {
             width: 100%;
-            max-height: 300px;
+            max-height: 400px;
             object-fit: cover;
             border-radius: 0.75rem;
-            background-color: #f1f5f9; /* Placeholder color while loading */
+            background-color: #f1f5f9;
+        }
+        /* Modal images fix */
+        #highlight-image, #auto-popup-image {
+            max-width: 100%;
+            max-height: 70vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            margin: 0 auto;
         }
         
         /* Force load UI elements */
@@ -1193,7 +1203,7 @@
                     if (data.isHighlighted) highlightedPost = { id: d.id, ...data };
                     
                     const date = new Date(data.date).toLocaleDateString('th-TH');
-                    const imgHtml = data.imageLink ? `<img src="${data.imageLink}" class="w-full rounded-lg mt-2 mb-2 max-h-48 object-cover" onerror="this.style.display='none'">` : '';
+                    const imgHtml = data.imageLink ? `<div class="w-full overflow-hidden rounded-lg mt-2 mb-2 bg-slate-50 flex items-center justify-center"><img src="${data.imageLink}" class="max-w-full max-h-64 object-contain" onerror="this.parentElement.style.display='none'"></div>` : '';
                     const highlightBadge = data.isHighlighted ? `<span class="bg-red-50 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full mr-2 border border-red-100">สำคัญ</span>` : '';
                     const deleteBtn = userData && userData.role === 'admin' ? `<button onclick="deleteAnnouncement('${d.id}')" class="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors z-10 p-1"><i class="fa-solid fa-trash-can"></i></button>` : '';
                     list.innerHTML += `
