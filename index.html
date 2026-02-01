@@ -5,8 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบดิจิทัล ส.ท.</title>
     
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS (Offline-ready Fallback or Local) -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Check if Tailwind is loaded, if not, it might be an older browser or network issue
+        window.addEventListener('load', function() {
+            if (!window.tailwind) {
+                console.warn("Tailwind CSS failed to load from CDN. UI might be broken.");
+            }
+        });
+    </script>
+    
+    <!-- Critical CSS for fallback -->
+    <style>
+        /* Base styles if Tailwind fails to load */
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .hidden { display: none; }
+        .min-h-screen { min-height: 100vh; }
+        .p-4 { padding: 1rem; }
+        .bg-white { background-color: white; }
+        .rounded-3xl { border-radius: 1.5rem; }
+        .shadow-xl { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        .w-full { width: 100%; }
+        .max-w-md { max-width: 28rem; }
+        
+        /* Fix for older browsers where Flexbox/Grid might behave differently */
+        #auth-container {
+            display: -webkit-flex;
+            display: flex;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+        }
+
+        /* Ensure images are visible */
+        img { display: block; width: 100%; height: auto; }
+        
+        /* Fix text alignment */
+        .text-center { text-align: center; }
+    </style>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1474,6 +1515,12 @@
                 document.getElementById('app-container').classList.add('hidden');
             }
         });
+    </script>
+    <script>
+        // Check if Tailwind is loaded
+        if (typeof tailwind === 'undefined') {
+            document.body.innerHTML += '<div style="position:fixed;top:0;left:0;width:100%;background:red;color:white;text-align:center;z-index:9999;padding:5px;font-size:12px;">Browser ไม่รองรับการแสดงผลบางส่วน กรุณาใช้ Chrome หรือ Safari เวอร์ชั่นล่าสุด</div>';
+        }
     </script>
 </body>
 </html>
