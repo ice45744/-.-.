@@ -587,6 +587,7 @@
             try {
                 showLoading();
                 await signInWithEmailAndPassword(auth, email, password);
+                // The onAuthStateChanged listener will handle the UI switch
             } catch (error) {
                 hideLoading();
                 Swal.fire('ผิดพลาด', 'รหัสนักเรียนหรือรหัสผ่านไม่ถูกต้อง', 'error');
@@ -617,7 +618,9 @@
                 await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'users', user.uid), profileData);
                 await updateProfile(user, { displayName: name });
                 saveToLocal('user_data', profileData);
+                hideLoading(); // Hide loading after success
                 Swal.fire('สำเร็จ', 'ลงทะเบียนเรียบร้อย', 'success');
+                // The onAuthStateChanged listener will handle the UI switch
             } catch (error) {
                 hideLoading();
                 Swal.fire('ผิดพลาด', error.message, 'error');
@@ -1504,15 +1507,20 @@
 
         // Start
         onAuthStateChanged(auth, (user) => {
-            hideLoading();
             if(user) {
+                document.getElementById('auth-container').style.display = 'none';
                 document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('app-container').style.display = 'block';
                 document.getElementById('app-container').classList.remove('hidden');
                 initApp(user);
                 navTo('home');
+                hideLoading();
             } else {
+                document.getElementById('auth-container').style.display = 'flex';
                 document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('app-container').style.display = 'none';
                 document.getElementById('app-container').classList.add('hidden');
+                hideLoading();
             }
         });
     </script>
