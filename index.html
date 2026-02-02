@@ -37,39 +37,6 @@
         });
     </script>
     
-    <!-- Critical CSS for fallback -->
-    <style>
-        /* Base styles if Tailwind fails to load */
-        .flex { display: flex; }
-        .flex-col { flex-direction: column; }
-        .items-center { align-items: center; }
-        .justify-center { justify-content: center; }
-        .hidden { display: none; }
-        .min-h-screen { min-height: 100vh; }
-        .p-4 { padding: 1rem; }
-        .bg-white { background-color: white; }
-        .rounded-3xl { border-radius: 1.5rem; }
-        .shadow-xl { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
-        .w-full { width: 100%; }
-        .max-w-md { max-width: 28rem; }
-        
-        /* Fix for older browsers where Flexbox/Grid might behave differently */
-        #auth-container {
-            display: -webkit-flex;
-            display: flex;
-            -webkit-align-items: center;
-            align-items: center;
-            -webkit-justify-content: center;
-            justify-content: center;
-        }
-
-        /* Ensure images are visible */
-        img { display: block; width: 100%; height: auto; }
-        
-        /* Fix text alignment */
-        .text-center { text-align: center; }
-    </style>
-    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -83,65 +50,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
-    <style>
-        body {
-            font-family: 'Prompt', sans-serif;
-            background-color: #F0F9FF;
-            color: #1E293B;
-            overscroll-behavior-y: contain; /* Prevent pull-to-refresh bug */
-            -webkit-overflow-scrolling: touch;
-        }
-        .gradient-bg { background: linear-gradient(135deg, #2563EB 0%, #60A5FA 100%); }
-        .gradient-morning { background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%); }
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
-        
-        /* Mobile Active States */
-        .active-nav { color: #2563EB; transform: scale(1.1); }
-        .stamp-active {
-            background-color: #2563EB; color: white;
-            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4); transform: scale(1.05);
-        }
-        .stamp-inactive {
-            background-color: rgba(255,255,255,0.5); color: rgba(255,255,255,0.5);
-            border: 2px dashed rgba(255,255,255,0.3);
-        }
-        #reader video { border-radius: 1rem; object-fit: cover; }
-
-        /* Fix image aspect ratio and loading */
-        img {
-            max-width: 100%;
-            height: auto;
-            object-fit: contain;
-            display: block;
-            margin: 0 auto;
-        }
-        .announcement-img {
-            width: 100%;
-            max-height: 400px;
-            object-fit: cover;
-            border-radius: 0.75rem;
-            background-color: #f1f5f9;
-        }
-        /* Modal images fix */
-        #highlight-image, #auto-popup-image {
-            max-width: 100%;
-            max-height: 70vh;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            margin: 0 auto;
-        }
-        
-        /* Force load UI elements */
-        .page-content {
-            min-height: calc(100vh - 120px);
-            opacity: 1 !important;
-            display: block;
-        }
-        .page-content.hidden {
-            display: none !important;
-        }
-    </style>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-blue-50">
 

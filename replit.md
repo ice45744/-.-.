@@ -4,7 +4,8 @@
 A Thai language Student Council web application - a single-page application built with HTML, Tailwind CSS, and JavaScript. Uses Firebase for authentication and data storage.
 
 ## Project Structure
-- `index.html` - Main application file containing all HTML, CSS, and JavaScript
+- `index.html` - Main application file containing HTML and JavaScript
+- `css/styles.css` - Extracted CSS styles for faster loading
 
 ## Technologies
 - HTML5
