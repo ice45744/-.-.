@@ -546,9 +546,17 @@
                 }
                 localStorage.setItem('last_login_attempt', Date.now());
 
-                if(!studentId || !password) return showToast('กรุณากรอกข้อมูล', 'warning');
+                if(!studentId || !password) {
+                    hideLoading();
+                    return showToast('กรุณากรอกข้อมูล', 'warning');
+                }
+                
+                const email = `${studentId}@student.local`;
+                await signInWithEmailAndPassword(auth, email, password);
+                // The onAuthStateChanged listener will handle the UI switch
+            } catch (error) {
                 hideLoading();
-                Swal.fire('ผิดพลาด', 'รหัสนักเรียนหรือรหัสผ่านไม่ถูกต้อง', 'error');
+                Swal.fire('ผิดพลาด', error.message || 'รหัสนักเรียนหรือรหัสผ่านไม่ถูกต้อง', 'error');
             }
         };
 
