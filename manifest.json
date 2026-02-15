@@ -4,8 +4,10 @@
   "description": "ระบบจัดการข้อมูลนักเรียน ประกาศข่าวสาร และกิจกรรมความดี สภานักเรียน",
   "start_url": "index.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#F0F9FF",
   "theme_color": "#2563EB",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "https://www.dropbox.com/scl/fi/whfakycfyhqvp0k08rmg0/1769767494208.png?rlkey=gcig41plyyr1rbljsuzfl9vkq&st=0udcfkxq&dl=1",
