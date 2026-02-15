@@ -1,0 +1,21 @@
+{
+  "name": "ระบบดิจิทัล ส.ท.",
+  "short_name": "ส.ท. Digital",
+  "description": "ระบบจัดการข้อมูลนักเรียน ประกาศข่าวสาร และกิจกรรมความดี สภานักเรียน",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#F0F9FF",
+  "theme_color": "#2563EB",
+  "icons": [
+    {
+      "src": "https://www.dropbox.com/scl/fi/whfakycfyhqvp0k08rmg0/1769767494208.png?rlkey=gcig41plyyr1rbljsuzfl9vkq&st=0udcfkxq&dl=1",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://www.dropbox.com/scl/fi/whfakycfyhqvp0k08rmg0/1769767494208.png?rlkey=gcig41plyyr1rbljsuzfl9vkq&st=0udcfkxq&dl=1",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
