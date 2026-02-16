@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ระบบดิจิทัล ส.ท. | สภานักเรียน</title>
     <meta name="description" content="ระบบจัดการข้อมูลนักเรียน ประกาศข่าวสาร และกิจกรรมความดี สภานักเรียน ระบบดิจิทัลเพื่อการพัฒนาโรงเรียน">
     <meta name="keywords" content="สภานักเรียน, ระบบดิจิทัล, โรงเรียน, ความดี, ธนาคารขยะ, เช็คชื่อ">
@@ -11,6 +11,29 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://www.gstatic.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap">
+    
+    <style>
+        body { font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .gradient-bg { background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); }
+        .stamp-active { @apply bg-blue-600 text-white shadow-md transform scale-110; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .stamp-inactive { @apply bg-slate-100 text-slate-300 border border-slate-200; }
+        .nav-btn { @apply transition-all duration-200; }
+        .nav-btn.active-nav { @apply text-blue-600 scale-110; }
+        
+        /* Smooth Scrolling */
+        html { scroll-behavior: smooth; }
+        
+        /* Better Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Mobile Optimization */
+        @media (max-width: 640px) {
+            .page-content { padding-bottom: 2rem; }
+        }
+    </style>
     
     <!-- CSP (Basic) -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval' data: blob:; img-src 'self' https: data: blob:;">
@@ -45,8 +68,6 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Fonts (Prompt) -->
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap&font-display=swap" rel="stylesheet">
 
     <!-- Theme Color for Mobile -->
     <meta name="theme-color" content="#2563EB">
@@ -1234,7 +1255,7 @@
                 let highlightedPost = null;
                 snap.forEach(d => {
                     const data = d.data();
-                    if (data.isHighlighted) highlightedPost = { id: d.id, ...data };
+                    if (data.isHighlighted && data.imageLink) highlightedPost = { id: d.id, ...data };
                     
                     const date = new Date(data.date).toLocaleDateString('th-TH');
                     const imgHtml = data.imageLink ? `<div class="w-full overflow-hidden rounded-lg mt-2 mb-2 bg-slate-50 flex items-center justify-center"><img src="${data.imageLink}" class="max-w-full max-h-64 object-contain" onerror="this.parentElement.style.display='none'"></div>` : '';
@@ -1270,37 +1291,26 @@
                     lastAutoPopupId = highlightedPost.id;
                     // Show image-only popup for auto popup (highlighted posts)
                     if (highlightedPost.imageLink) {
-                        showAutoPopupImage(highlightedPost.imageLink);
+                        Swal.fire({
+                            imageUrl: highlightedPost.imageLink,
+                            imageAlt: 'ประกาศสำคัญ',
+                            showConfirmButton: true,
+                            confirmButtonText: 'ปิด',
+                            confirmButtonColor: '#3b82f6',
+                            width: 'auto',
+                            padding: '0',
+                            background: 'transparent',
+                            showCloseButton: true,
+                            customClass: {
+                                image: 'rounded-2xl max-h-[80vh] object-contain m-0 shadow-2xl border-4 border-white/20',
+                                confirmButton: 'rounded-xl px-8 py-3 font-bold mt-4'
+                            }
+                        });
                     }
                 }
             });
         }
         
-        window.showAutoPopupImage = (imageUrl) => {
-            const modal = document.getElementById('auto-popup-modal');
-            const content = document.getElementById('auto-popup-content');
-            const img = document.getElementById('auto-popup-image');
-            img.src = imageUrl;
-            modal.classList.remove('hidden');
-            // Force reflow for transition
-            setTimeout(() => {
-                modal.classList.add('opacity-100');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
-            }, 10);
-        };
-
-        window.closeAutoPopup = () => {
-            const modal = document.getElementById('auto-popup-modal');
-            const content = document.getElementById('auto-popup-content');
-            modal.classList.remove('opacity-100');
-            content.classList.remove('scale-100');
-            content.classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        };
-
         window.showHighlight = async (id) => {
             const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'announcements', id);
             const snap = await getDoc(docRef);
