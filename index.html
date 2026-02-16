@@ -1557,7 +1557,19 @@
                 document.getElementById('app-container').style.display = 'block';
                 document.getElementById('app-container').classList.remove('hidden');
                 initApp(user);
-                navTo('home');
+                
+                // Handle App Shortcuts
+                const urlParams = new URLSearchParams(window.location.search);
+                const action = urlParams.get('action');
+                if (action === 'checkin') {
+                    navTo('activity');
+                    switchActivityTab('good-deeds');
+                } else if (action === 'report') {
+                    navTo('report');
+                } else {
+                    navTo('home');
+                }
+                
                 hideLoading();
             } else {
                 document.getElementById('auth-container').style.display = 'flex';
