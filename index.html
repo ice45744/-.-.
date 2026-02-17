@@ -1616,12 +1616,16 @@
             // Robustly determine backend URL for Replit environment
             let backendUrl = window.location.origin;
             if (backendUrl.includes('replit.dev')) {
-                backendUrl = backendUrl.replace('-5000', '-3001');
-                if (!backendUrl.includes('-3001')) {
-                    // Handle cases where port isn't in the subdomain
+                // If origin is like https://id.replit.dev, we need https://id-3001.replit.dev
+                // If origin is like https://id-5000.replit.dev, we need https://id-3001.replit.dev
+                if (backendUrl.includes('-5000.')) {
+                    backendUrl = backendUrl.replace('-5000.', '-3001.');
+                } else {
                     const url = new URL(backendUrl);
                     const hostParts = url.hostname.split('.');
-                    hostParts[0] = hostParts[0] + '-3001';
+                    if (!hostParts[0].endsWith('-3001')) {
+                        hostParts[0] = hostParts[0] + '-3001';
+                    }
                     url.hostname = hostParts.join('.');
                     backendUrl = url.origin;
                 }
