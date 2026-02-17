@@ -1596,6 +1596,61 @@
             document.body.innerHTML += '<div style="position:fixed;top:0;left:0;width:100%;background:red;color:white;text-align:center;z-index:9999;padding:5px;font-size:12px;">Browser ไม่รองรับการแสดงผลบางส่วน กรุณาใช้ Chrome หรือ Safari เวอร์ชั่นล่าสุด</div>';
         }
     </script>
+    <!-- Cloudinary Upload Section -->
+    <div class="mt-8 p-6 bg-white rounded-lg shadow-md max-w-md mx-auto">
+        <h2 class="text-xl font-bold mb-4 text-gray-800">อัพโหลดรูปภาพ</h2>
+        <div class="flex flex-col items-center gap-4">
+            <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+            <button id="uploadBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200">อัพโหลด</button>
+            <div id="status" class="text-sm text-gray-600 mt-2"></div>
+            <div id="imagePreview" class="mt-4 hidden">
+                <p class="text-sm text-gray-600 mb-2">ลิงค์รูปภาพ:</p>
+                <input type="text" id="imageUrl" readonly class="w-full p-2 border rounded bg-gray-50 text-xs">
+                <img id="preview" class="mt-2 w-full rounded shadow-sm border" src="" alt="Preview">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadBtn').addEventListener('click', async () => {
+            const input = document.getElementById('imageInput');
+            const status = document.getElementById('status');
+            const previewDiv = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('preview');
+            const imageUrlInput = document.getElementById('imageUrl');
+
+            if (!input.files || input.files.length === 0) {
+                status.innerText = 'กรุณาเลือกไฟล์';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', input.files[0]);
+
+            status.innerText = 'กำลังอัพโหลด...';
+            try {
+                // Determine backend URL (current domain + port 3001)
+                const backendUrl = window.location.origin.replace(':5000', ':3001');
+                const response = await fetch(`${backendUrl}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.url) {
+                    status.innerText = 'อัพโหลดสำเร็จ!';
+                    previewDiv.classList.remove('hidden');
+                    previewImg.src = data.url;
+                    imageUrlInput.value = data.url;
+                } else {
+                    status.innerText = 'เกิดข้อผิดพลาด: ' + (data.error || 'Unknown error');
+                }
+            } catch (error) {
+                status.innerText = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+                console.error(error);
+            }
+        });
+    </script>
 </body>
 </html>
 
