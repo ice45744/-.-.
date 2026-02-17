@@ -1612,7 +1612,22 @@
         async function uploadToCloudinary(file, statusElementId, hiddenInputId) {
             const statusEl = document.getElementById(statusElementId);
             const hiddenInput = document.getElementById(hiddenInputId);
-            const backendUrl = window.location.origin.replace(':5000', ':3001');
+            
+            // Robustly determine backend URL for Replit environment
+            let backendUrl = window.location.origin;
+            if (backendUrl.includes('replit.dev')) {
+                backendUrl = backendUrl.replace('-5000', '-3001');
+                if (!backendUrl.includes('-3001')) {
+                    // Handle cases where port isn't in the subdomain
+                    const url = new URL(backendUrl);
+                    const hostParts = url.hostname.split('.');
+                    hostParts[0] = hostParts[0] + '-3001';
+                    url.hostname = hostParts.join('.');
+                    backendUrl = url.origin;
+                }
+            } else {
+                backendUrl = backendUrl.replace(':5000', ':3001');
+            }
             
             statusEl.innerText = 'กำลังอัปโหลด...';
             statusEl.className = 'text-[10px] text-blue-500 animate-pulse';
@@ -1625,6 +1640,7 @@
                     method: 'POST',
                     body: formData
                 });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 if (data.url) {
                     hiddenInput.value = data.url;
@@ -1635,6 +1651,7 @@
                     throw new Error(data.error || 'Upload failed');
                 }
             } catch (err) {
+                console.error('Upload error:', err);
                 statusEl.innerText = 'อัปโหลดล้มเหลว: ' + err.message;
                 statusEl.className = 'text-[10px] text-red-500';
                 return null;
